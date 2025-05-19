@@ -1,0 +1,259 @@
+# UltraSafe Customer Support RAG Chatbot Documentation
+## Project Overview
+The UltraSafe Customer Support RAG Chatbot is a FastAPI-based application that leverages Retrieval-Augmented Generation (RAG) to provide accurate and context-aware responses to customer inquiries. The system integrates with Qdrant Cloud for vector storage and the USF API for language model capabilities.
+
+## System Architecture
+### Core Components
+1. FastAPI Backend
+   
+   - Provides RESTful API endpoints
+   - Handles authentication and session management
+   - Manages request/response flow
+2. RAG Pipeline
+   
+   - Document retrieval from Qdrant vector database
+   - Cross-encoder reranking for improved relevance
+   - Context-aware response generation via USF API
+3. Authentication System
+   
+   - JWT-based authentication
+   - Secure password hashing
+   - Token expiry management
+4. Evaluation Framework
+   
+   - Metrics for measuring retrieval performance
+   - Response quality assessment
+## Installation and Setup
+### Prerequisites
+- Python 3.9+
+- USF API access credentials
+- Qdrant Cloud account
+- Virtual environment (recommended)
+### Installation Steps
+1. Clone the repository
+   
+   ```
+   git clone <repository-url>
+   cd ultrasafe1
+   ```
+2. Set up virtual environment
+   
+   ```
+   python -m venv venv
+   venv\Scripts\activate  # On Windows
+   ```
+3. Install dependencies
+   
+   ```
+   pip install -r requirements.txt
+   ```
+4. Configure environment variables Create a .env file with the following variables:
+   
+   ```
+   # USF API Configuration
+   USF_API_URL=your_usf_api_url
+   USF_API_KEY=your_usf_api_key
+   USF_MODEL=usf1-mini
+   
+   # Qdrant Configuration
+   QDRANT_URL=your_qdrant_url
+   QDRANT_API_KEY=your_qdrant_api_key
+   QDRANT_COLLECTION_NAME=your_collectio
+   n_name
+   
+   # Application Settings
+   APP_NAME=Customer Support RAG
+   DEBUG=true
+   ENVIRONMENT=development
+   LOG_LEVEL=INFO
+   API_PREFIX=/api/v1
+   SESSION_EXPIRY=3600
+   MAX_HISTORY=10
+   
+   # Security Settings
+   SECRET_KEY=your_secret_key
+   ALGORITHM=HS256
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   ```
+5. Start the server
+   
+   ```
+   # Using Python
+   python main.py
+   
+   # Or using Uvicorn directly
+   uvicorn app.main:app --reload
+   ```
+## API Reference
+### Authentication Endpoints Get JWT Access Token
+- URL : /api/v1/auth/token
+- Method : POST
+- Request Body :
+  ```
+  {
+    "username": "string",
+    "password": "string"
+  }
+  ```
+- Response :
+  ```
+  {
+    "access_token": "string",
+    "token_type": "bearer"
+  }
+  ``` Refresh JWT Token
+- URL : /api/v1/auth/refresh
+- Method : POST
+- Headers : Authorization: Bearer {token}
+- Response :
+  ```
+  {
+    "access_token": "string",
+    "token_type": "bearer"
+  }
+  ```
+### Chat Endpoint Send Message
+- URL : /api/v1/chat
+- Method : POST
+- Headers : Authorization: Bearer {token}
+- Request Body :
+  ```
+  {
+    "message": "string",
+    "session_id": "string" (optional)
+  }
+  ```
+- Response :
+  ```
+  {
+    "session_id": "string",
+    "response": "string",
+    "chat_history": [
+      {
+        "role": "string",
+        "content": "string"
+      }
+    ]
+  }
+  ```
+## Key Components
+### RAG Pipeline
+The RAG pipeline is the core of the system, responsible for:
+
+1. Document Retrieval :
+   
+   - Converts user query to embedding
+   - Searches Qdrant for relevant documents
+   - Returns top matches
+2. Reranking :
+   
+   - Uses cross-encoder model to rerank initial results
+   - Improves relevance of retrieved documents
+3. Response Generation :
+   
+   - Combines retrieved context with user query
+   - Sends to USF API for response generation
+   - Returns context-aware response
+```
+# Example flow:
+query = "How do I reset my password?"
+documents = rag_pipeline.
+get_relevant_documents(query)
+response = await rag_pipeline.
+generate_response(query, chat_history)
+```
+### Evaluation Metrics
+The system includes evaluation metrics to measure performance:
+
+1. Retrieval Metrics :
+   
+   - Precision@k
+   - Recall@k
+   - F1@k
+2. Response Quality Metrics :
+   
+   - Semantic similarity
+   - Length ratio
+### Session Management
+The application maintains user sessions with:
+
+- Unique session IDs
+- Chat history tracking
+- Automatic session expiry
+- Maximum history limits
+## Project Structure
+```
+ultrasafe1/
+├── app/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── config.py
+│   │   └── logging.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   └── qdrant_client.py
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   └── metrics.py
+│   ├── rag/
+│   │   ├── __init__.py
+│   │   ├── pipeline.py
+│   │   └── reranker.py
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── chat.py
+│   │   └── auth.py
+│   └── main.py
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_api.py
+│   └── test_rag.py
+├── .env.example
+├── .gitignore
+├── main.py
+├── README.md
+└── requirements.txt
+```
+## Configuration Options
+Variable Description Default USF_API_URL URL for the USF API Required USF_API_KEY Key for accessing the USF API Required USF_MODEL Model to use usf1-mini QDRANT_URL URL for Qdrant Cloud Required QDRANT_API_KEY API key for Qdrant Cloud Optional APP_NAME Name of the application Customer Support RAG DEBUG Enable debug mode False LOG_LEVEL Logging level INFO SECRET_KEY Secret key for JWT Required ACCESS_TOKEN_EXPIRE_MINUTES JWT token expiry time 30 SESSION_TIMEOUT_MINUTES Session timeout in minutes 30 MAX_CHAT_HISTORY Maximum number of messages in chat history 10
+
+## Troubleshooting
+### Common Issues
+1. Authentication Failures
+   
+   - Check that your SECRET_KEY is properly set
+   - Verify token expiration settings
+2. RAG Pipeline Errors
+   
+   - Ensure Qdrant connection is properly configured
+   - Verify USF API credentials are correct
+3. Performance Issues
+   
+   - Check LOG_LEVEL for detailed error information
+   - Review evaluation metrics for pipeline performance
+## Development Guidelines
+### Adding New Features
+1. Create appropriate schema models in app/schemas/
+2. Implement business logic in relevant modules
+3. Add API endpoints in app/api/routes.py
+4. Update tests to cover new functionality
+### Testing
+Run tests using pytest:
+
+```
+pytest
+```
+## Security Considerations
+- All API keys and secrets should be stored in environment variables
+- JWT tokens have configurable expiration
+- Password hashing uses bcrypt for security
+- Authentication is required for all chat endpoints
+## Performance Optimization
+- Cross-encoder reranking improves retrieval quality
+- Session management reduces redundant processing
+- Configurable parameters for tuning performance
